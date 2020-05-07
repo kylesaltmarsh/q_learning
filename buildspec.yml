@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock --host=tcp://127.0.0.1:2375 --storage-driver=overlay2&
+      - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
+  pre_build:
+    commands:
+      - docker build -t frozen-lake .
+      - docker tag frozen-lake:latest 649228437072.dkr.ecr.us-east-1.amazonaws.com/frozen-lake:latest
+  build:
+    commands:
+        - docker push 649228437072.dkr.ecr.us-east-1.amazonaws.com/frozen-lake:latest

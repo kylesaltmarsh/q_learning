@@ -24,6 +24,13 @@ class FrozenLake:
         self.gamma=gamma
         self.learning=learning
 
+        if not os.path.exists(os.path.dirname("~/opts/ml/model/")):
+            try:
+                os.makedirs(os.path.dirname("~/opts/ml/model/"))
+            except OSError as exc: # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
         self.env = gym.make('FrozenLake-v0',is_slippery=self.is_slippery)
         self.Q = np.zeros((self.env.observation_space.n, self.env.action_space.n))
     
@@ -96,10 +103,10 @@ class FrozenLake:
                     break
 
         if self.learning == 'q':
-            with open("/opts/ml/frozenLake_qTable.pkl", 'wb') as f:
+            with open("~/opts/ml/model/frozenLake_qTable.pkl", 'wb') as f:
                 pickle.dump(self.Q, f)
         elif self.learning == 'sarsa':
-            with open("/opts/ml/frozenLake_qTable_sarsa.pkl", 'wb') as f:
+            with open("~/opts/ml/model/frozenLake_qTable_sarsa.pkl", 'wb') as f:
                 pickle.dump(self.Q, f)
 
     def play(self):
