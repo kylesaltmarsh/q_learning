@@ -1,0 +1,4 @@
+numpy
+awscli
+sagemaker  # temp
+gym

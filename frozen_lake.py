@@ -1,6 +1,9 @@
+import time
+import pickle
+import os
+
 import gym
 import numpy as np
-import time, pickle, os
 
 class FrozenLake:
     def __init__(self, 
@@ -128,5 +131,5 @@ class FrozenLake:
 if __name__ == '__main__':
     frozen_lake_q_learning = FrozenLake(learning='q',is_slippery=True)
     frozen_lake_q_learning.train()
-    frozen_lake_q_learning.play()
+    # frozen_lake_q_learning.play()
 
