@@ -96,10 +96,10 @@ class FrozenLake:
                     break
 
         if self.learning == 'q':
-            with open("frozenLake_qTable.pkl", 'wb') as f:
+            with open("/opts/ml/frozenLake_qTable.pkl", 'wb') as f:
                 pickle.dump(self.Q, f)
         elif self.learning == 'sarsa':
-            with open("frozenLake_qTable_sarsa.pkl", 'wb') as f:
+            with open("/opts/ml/frozenLake_qTable_sarsa.pkl", 'wb') as f:
                 pickle.dump(self.Q, f)
 
     def play(self):
