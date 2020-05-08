@@ -1,7 +1,7 @@
 import time
 import pickle
 import os
-
+import argparse
 import gym
 import numpy as np
 
@@ -14,7 +14,8 @@ class FrozenLake:
                 max_steps=100,
                 lr_rate=0.8,
                 gamma=0.95,
-                learning='q'):
+                learning='q',
+                path=os.getcwd()):
         self.is_slippery=is_slippery
         self.epsilon=epsilon
         self.epsilon_decay=epsilon_decay
@@ -23,13 +24,7 @@ class FrozenLake:
         self.lr_rate=lr_rate
         self.gamma=gamma
         self.learning=learning
-
-        if not os.path.exists(os.path.dirname("/opt/ml/model/")):
-            try:
-                os.makedirs(os.path.dirname("/opt/ml/model/"))
-            except OSError as exc: # Guard against race condition
-                if exc.errno != errno.EEXIST:
-                    raise
+        self.path=path
 
         self.env = gym.make('FrozenLake-v0',is_slippery=self.is_slippery)
         self.Q = np.zeros((self.env.observation_space.n, self.env.action_space.n))
@@ -102,11 +97,17 @@ class FrozenLake:
 
                     break
 
+        if not os.path.exists(os.path.dirname(self.path)):
+            try:
+                os.makedirs(os.path.dirname(self.path))
+            except OSError as exc:
+                raise
+
         if self.learning == 'q':
-            with open("/opt/ml/model/frozenLake_qTable.pkl", 'wb') as f:
+            with open(self.path+"/frozenLake_qTable.pkl", 'wb') as f:
                 pickle.dump(self.Q, f)
         elif self.learning == 'sarsa':
-            with open("/opt/ml/model/frozenLake_qTable_sarsa.pkl", 'wb') as f:
+            with open(self.path+"/frozenLake_qTable_sarsa.pkl", 'wb') as f:
                 pickle.dump(self.Q, f)
 
     def play(self):
@@ -136,7 +137,21 @@ class FrozenLake:
                 os.system('clear')
 
 if __name__ == '__main__':
-    frozen_lake_q_learning = FrozenLake(learning='q',is_slippery=True)
-    frozen_lake_q_learning.train()
-    # frozen_lake_q_learning.play()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", help="Train or play", default='train', type=str)
+    parser.add_argument("--learning", help="q or sarsa", default='q', type=str)
+    parser.add_argument("--is_slippery", help="True or False", default=0, type=int)
+    parser.add_argument("--path", help="True or False", default=os.getcwd(), type=str)
+    args = parser.parse_args()
+    # args_dict = vars(args)
+
+    frozen_lake_q_learning = FrozenLake(learning=args.learning, 
+                                        is_slippery=args.is_slippery, 
+                                        path=args.path)
+
+    if args.mode == 'train':
+        frozen_lake_q_learning.train()
+    elif args.mode == 'play':
+        frozen_lake_q_learning.play()
+
 
