@@ -1,0 +1,12 @@
+{
+    "mode":"play",
+    "is_slippery": false,
+    "learning": "q",
+    "epsilon": 1.0,
+    "epsilon_decay": 0.9993,
+    "total_episodes": 20000,
+    "max_steps": 100,
+    "lr_rate": 0.8,
+    "gamma": 0.95,
+    "n_episodes": 10
+}

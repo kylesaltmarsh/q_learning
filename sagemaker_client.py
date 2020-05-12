@@ -3,6 +3,7 @@ import boto3
 import botocore
 import tarfile
 import os
+import json
 
 # sageMaker session
 sess = sagemaker.Session()
@@ -17,10 +18,16 @@ bucket_name = 'sagemaker-demo-kyle'
 prefix = 'q_learning'
 model_output = "s3://{}/{}/model".format(bucket_name, prefix)
 # create an estimator
+
+f = open(os.getcwd()+'/hyperparameters.json',) 
+hyperparameters = json.load(f) 
+f.close() 
+
 clf = sagemaker.estimator.Estimator(image,
                                role, 1, 'ml.c4.2xlarge', # ml.p2.xlarge
                                output_path=model_output,
-                               sagemaker_session=sess)
+                               sagemaker_session=sess,
+                               hyperparameters=hyperparameters)
 # run entry point
 clf.fit()
 

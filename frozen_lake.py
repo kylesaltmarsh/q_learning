@@ -4,9 +4,11 @@ import os
 import argparse
 import gym
 import numpy as np
+import json
 
 class FrozenLake:
-    def __init__(self, 
+    def __init__(self,
+                mode = 'train', 
                 is_slippery=False,
                 epsilon=1.0, 
                 epsilon_decay=0.9993,
@@ -15,6 +17,7 @@ class FrozenLake:
                 lr_rate=0.8,
                 gamma=0.95,
                 learning='q',
+                n_episodes= 10,
                 path=os.getcwd()):
         self.is_slippery=is_slippery
         self.epsilon=epsilon
@@ -28,23 +31,35 @@ class FrozenLake:
 
         self.env = gym.make('FrozenLake-v0',is_slippery=self.is_slippery)
         self.Q = np.zeros((self.env.observation_space.n, self.env.action_space.n))
+
+        if hyperparameters['mode'] == 'train':
+            self.train()
+        elif hyperparameters['mode'] == 'play':
+            self.play(n_episodes)
+
     
     def choose_action(self, state):
         action=0
+        # take a random action episolon % of the time (exploration)
         if np.random.uniform(0, 1) < self.epsilon:
             action = self.env.action_space.sample()
+        # else act greedily and pick the current best value (exploitation)
         else:
             action = np.argmax(self.Q[state, :])
         return action
 
     def q_learning(self, state, state2, reward, action):
         predict = self.Q[state, action]
+        # choose action that maximises state
         target = reward + self.gamma * np.max(self.Q[state2, :])
+        # update q value table
         self.Q[state, action] = self.Q[state, action] + self.lr_rate * (target - predict)
 
     def sarsa_learning(self, state, state2, reward, action, action2):
         predict = self.Q[state, action]
+         # choose action based on current policy
         target = reward + self.gamma * self.Q[state2, action2]
+        # update q value table
         self.Q[state, action] = self.Q[state, action] + self.lr_rate * (target - predict)
 
     def test_game(self):
@@ -85,8 +100,10 @@ class FrozenLake:
                     action2 = self.choose_action(state2) 
                     self.sarsa_learning(state, state2, reward, action, action2)
 
+                # update the current state of the environment
                 state = state2
-
+                
+                # step time (to decrease the reward)
                 t += 1
             
                 if done:
@@ -110,7 +127,7 @@ class FrozenLake:
             with open(self.path+"/frozenLake_qTable_sarsa.pkl", 'wb') as f:
                 pickle.dump(self.Q, f)
 
-    def play(self):
+    def play(self, n_episodes):
         self.epsilon = 0
         if self.learning == 'q':
             with open("frozenLake_qTable.pkl", 'rb') as f:
@@ -119,7 +136,7 @@ class FrozenLake:
             with open("frozenLake_qTable_sarsa.pkl", 'rb') as f:
                 self.Q = pickle.load(f)            
 
-        for episode in range(5):
+        for episode in range(n_episodes):
             state = self.env.reset()
             print("*** Episode: ", episode)
             t = 0
@@ -138,20 +155,24 @@ class FrozenLake:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", help="Train or play", default='train', type=str)
-    parser.add_argument("--learning", help="q or sarsa", default='q', type=str)
-    parser.add_argument("--is_slippery", help="True or False", default=0, type=int)
-    parser.add_argument("--path", help="True or False", default=os.getcwd(), type=str)
+    parser.add_argument("--compute", help="local or sagemaker", default='local', type=str)
     args = parser.parse_args()
-    # args_dict = vars(args)
 
-    frozen_lake_q_learning = FrozenLake(learning=args.learning, 
-                                        is_slippery=args.is_slippery, 
-                                        path=args.path)
+    # Hyperparamters /opt/ml/input/config
+    if args.compute == 'local':
+        f = open(os.getcwd()+'/hyperparameters.json',) 
+        hyperparameters = json.load(f) 
+        f.close() 
+        hyperparameters['path'] = os.getcwd()
+    elif args.compute == 'sagemaker':
+        f = open('/opt/ml/input/config/hyperparameters.json',) 
+        hyperparameters = json.load(f) 
+        f.close()
+        hyperparameters['path'] = "/opt/ml/model/"
 
-    if args.mode == 'train':
-        frozen_lake_q_learning.train()
-    elif args.mode == 'play':
-        frozen_lake_q_learning.play()
+    print('---------------------------------------------------------------------')
+    print(hyperparameters)
+    print('---------------------------------------------------------------------')
 
+    frozen_lake_q_learning = FrozenLake(**hyperparameters)
 
